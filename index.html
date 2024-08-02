@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTM Parameters and Marketo Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        form {
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+        }
+
+        input[type="submit"] {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>UTM Parameters and Marketo Form</h1>
+    <p>Submit the form to see UTM parameters and URL parameters captured as cookies and sent along with the form data.
+    </p>
+
+    <form id="marketoForm" action="javascript:void(0);">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+        <input type="submit" value="Submit">
+    </form>
+
+    <script>
+        (function () {
+            // Function to get URL parameters
+            function getUrlParameter(name) {
+                name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+                var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+                var results = regex.exec(location.search);
+                return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+            }
+
+            // Function to set a cookie
+            function setCookie(name, value, days) {
+                var expires = "";
+                if (days) {
+                    var date = new Date();
+                    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                    expires = "; expires=" + date.toUTCString();
+                }
+                document.cookie = name + "=" + (value || "") + expires + "; path=/";
+            }
+
+            // List of UTM parameters to capture
+            var utmParameters = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+
+            // Capture UTM parameters from URL and store them as cookies
+            utmParameters.forEach(function (param) {
+                var paramValue = getUrlParameter(param);
+                if (paramValue) {
+                    setCookie(param, paramValue, 30); // Store cookie for 30 days
+                }
+            });
+
+            // Capture any other URL parameters you need
+            var otherParameters = ['param1', 'param2']; // Add your own parameters here
+
+            otherParameters.forEach(function (param) {
+                var paramValue = getUrlParameter(param);
+                if (paramValue) {
+                    setCookie(param, paramValue, 30); // Store cookie for 30 days
+                }
+            });
+
+            // Function to read a cookie
+            function getCookie(name) {
+                var nameEQ = name + "=";
+                var ca = document.cookie.split(';');
+                for (var i = 0; i < ca.length; i++) {
+                    var c = ca[i];
+                    while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                    if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+                }
+                return null;
+            }
+
+            // Example: Adding UTM parameters to a form
+            document.addEventListener("DOMContentLoaded", function () {
+                var form = document.getElementById('marketoForm');
+                if (form) {
+                    utmParameters.forEach(function (param) {
+                        var paramValue = getCookie(param);
+                        if (paramValue) {
+                            var hiddenField = document.createElement('input');
+                            hiddenField.type = 'hidden';
+                            hiddenField.name = param;
+                            hiddenField.value = paramValue;
+                            form.appendChild(hiddenField);
+                        }
+                    });
+
+                    otherParameters.forEach(function (param) {
+                        var paramValue = getCookie(param);
+                        if (paramValue) {
+                            var hiddenField = document.createElement('input');
+                            hiddenField.type = 'hidden';
+                            hiddenField.name = param;
+                            hiddenField.value = paramValue;
+                            form.appendChild(hiddenField);
+                        }
+                    });
+                }
+
+                // Submit event for demonstration
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+                    alert("Form submitted with the following data:\n" +
+                        "Name: " + document.getElementById('name').value + "\n" +
+                        "UTM Parameters: " + utmParameters.map(param => `${param}: ${getCookie(param)}`).join(", ") + "\n" +
+                        "Other Parameters: " + otherParameters.map(param => `${param}: ${getCookie(param)}`).join(", "));
+                });
+            });
+        })();
+    </script>
+</body>
+
+</html>
